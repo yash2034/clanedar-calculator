@@ -1,1 +1,278 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Days & Nights Calculator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .date-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            color: #555;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        input[type="date"] {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s;
+            background: #f9f9f9;
+        }
+
+        input[type="date"]:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+        }
+
+        .calculate-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
+        }
+
+        .calculate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .calculate-btn:active {
+            transform: translateY(0);
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 25px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 15px;
+            display: none;
+        }
+
+        .result.show {
+            display: block;
+            animation: slideIn 0.4s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .result-label {
+            color: #555;
+            font-weight: 500;
+        }
+
+        .result-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .nights-value {
+            font-size: 32px;
+            color: #764ba2;
+        }
+
+        .error {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 10px;
+            display: none;
+            text-align: center;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        .icon {
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏨 Hotel Stay Calculator</h1>
+        <p class="subtitle">Calculate your stay duration</p>
+
+        <div class="date-group">
+            <label for="checkin">
+                <span class="icon">📅</span>Check-in Date
+            </label>
+            <input type="date" id="checkin" required>
+        </div>
+
+        <div class="date-group">
+            <label for="checkout">
+                <span class="icon">📅</span>Check-out Date
+            </label>
+            <input type="date" id="checkout" required>
+        </div>
+
+        <button class="calculate-btn" onclick="calculateStay()">Calculate Stay</button>
+
+        <div class="error" id="error"></div>
+
+        <div class="result" id="result">
+            <div class="result-item">
+                <span class="result-label">Check-in</span>
+                <span class="result-value" id="checkinDisplay"></span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Check-out</span>
+                <span class="result-value" id="checkoutDisplay"></span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Total Days</span>
+                <span class="result-value" id="daysDisplay"></span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">🌙 Nights</span>
+                <span class="result-value nights-value" id="nightsDisplay"></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Set minimum date to today
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('checkin').setAttribute('min', today);
+        document.getElementById('checkout').setAttribute('min', today);
+
+        // Update checkout minimum when checkin changes
+        document.getElementById('checkin').addEventListener('change', function() {
+            const checkinDate = this.value;
+            document.getElementById('checkout').setAttribute('min', checkinDate);
+        });
+
+        function calculateStay() {
+            const checkin = document.getElementById('checkin').value;
+            const checkout = document.getElementById('checkout').value;
+            const errorDiv = document.getElementById('error');
+            const resultDiv = document.getElementById('result');
+
+            // Clear previous errors
+            errorDiv.classList.remove('show');
+            errorDiv.textContent = '';
+
+            // Validation
+            if (!checkin || !checkout) {
+                errorDiv.textContent = 'Please select both check-in and check-out dates';
+                errorDiv.classList.add('show');
+                resultDiv.classList.remove('show');
+                return;
+            }
+
+            const checkinDate = new Date(checkin);
+            const checkoutDate = new Date(checkout);
+
+            if (checkoutDate <= checkinDate) {
+                errorDiv.textContent = 'Check-out date must be after check-in date';
+                errorDiv.classList.add('show');
+                resultDiv.classList.remove('show');
+                return;
+            }
+
+            // Calculate difference in milliseconds
+            const diffTime = Math.abs(checkoutDate - checkinDate);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            const nights = diffDays;
+
+            // Format dates for display
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            const checkinFormatted = checkinDate.toLocaleDateString('en-US', options);
+            const checkoutFormatted = checkoutDate.toLocaleDateString('en-US', options);
+
+            // Display results
+            document.getElementById('checkinDisplay').textContent = checkinFormatted;
+            document.getElementById('checkoutDisplay').textContent = checkoutFormatted;
+            document.getElementById('daysDisplay').textContent = diffDays;
+            document.getElementById('nightsDisplay').textContent = nights;
+
+            resultDiv.classList.add('show');
+        }
+
+        // Allow Enter key to calculate
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                calculateStay();
+            }
+        });
+    </script>
+</body>
+</html>
